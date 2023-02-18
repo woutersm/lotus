@@ -622,21 +622,12 @@ class BraintreeConnector(PaymentProcesor):
     def get_post_data_serializer(self) -> serializers.Serializer:
         class BraintreePostRequestDataSerializer(serializers.Serializer):
             nango_connected = serializers.BooleanField()
-            merchant_id = serializers.CharField(required=False)
 
         return BraintreePostRequestDataSerializer
 
     def handle_post(self, data, organization) -> None:
         from metering_billing.models import BraintreeOrganizationIntegration
 
-        # if organization.organization_type == Organization.OrganizationType.PRODUCTION:
-        #     stripe.api_key = self.live_secret_key
-        # else:
-        #     stripe.api_key = self.test_secret_key
-        # response = stripe.OAuth.token(
-        #     grant_type="authorization_code",
-        #     code=data["authorization_code"],
-        # )
         nango_connected = data.get("nango_connected", False)
 
         if not nango_connected:
@@ -648,10 +639,18 @@ class BraintreeConnector(PaymentProcesor):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        stored_id = data.get("merchant_id") or organization.organization_id
+
+        connection_id = self.get_connection_id(organization)
+
+        headers = {"Authorization": f"Bearer {NANGO_SECRET}"}
+
+        url = f"https://api.nango.dev/connection/{connection_id}?provider_config_key={self._get_config_key(organization)}"
+
+        resp = requests.get(url, headers=headers).json()
+        print(resp)
         integration = BraintreeOrganizationIntegration.objects.create(
             organization=organization,
-            braintree_merchant_id=stored_id,
+            braintree_merchant_id=resp.metadata.merchantId,
         )
         organization.braintree_integration = integration
         organization.save()
@@ -1320,14 +1319,12 @@ PAYMENT_PROCESSOR_MAP = {}
 try:
     PAYMENT_PROCESSOR_MAP[PAYMENT_PROCESSORS.STRIPE] = StripeConnector()
 except Exception as e:
-    print("ERROR: ", e)
     logger.error(e)
     sentry_sdk.capture_exception(e)
     pass
 try:
     PAYMENT_PROCESSOR_MAP[PAYMENT_PROCESSORS.BRAINTREE] = BraintreeConnector()
 except Exception as e:
-    print("ERROR: ", e)
     logger.error(e)
     sentry_sdk.capture_exception(e)
     pass

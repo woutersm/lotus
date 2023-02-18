@@ -57,7 +57,6 @@ const IntegrationsTab: FC = () => {
           console.log("RESULT FROM OAUTH: ", result);
           const inner_data: BraintreeConnectionRequestType = {
             nango_connnected: true,
-            merchant_id: result.metadata.merchantId,
           };
           const request_data: PaymentProcessorConnectionRequestType = {
             payment_processor: "braintree",
@@ -74,6 +73,7 @@ const IntegrationsTab: FC = () => {
           refetch();
         })
         .catch((error) => {
+          console.log("ERROR: ", error);
           toast.error(
             `There was an error in the OAuth flow for integration: ${error.message}`
           );

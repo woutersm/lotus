@@ -27,7 +27,6 @@ export interface StripeConnectionRequestType {
 }
 
 export interface BraintreeConnectionRequestType {
-  merchant_id?: string;
   nango_connnected: boolean;
 }
 

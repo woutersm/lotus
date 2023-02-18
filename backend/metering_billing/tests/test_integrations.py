@@ -7,6 +7,8 @@ import pytest
 import stripe
 from django.conf import settings
 from django.db.models import Q
+from rest_framework.test import APIClient
+
 from metering_billing.invoice import generate_invoice
 from metering_billing.models import (
     Customer,
@@ -17,7 +19,6 @@ from metering_billing.models import (
 from metering_billing.payment_processors import PAYMENT_PROCESSOR_MAP
 from metering_billing.utils import now_utc
 from metering_billing.utils.enums import PAYMENT_PROCESSORS
-from rest_framework.test import APIClient
 
 STRIPE_TEST_SECRET_KEY = settings.STRIPE_TEST_SECRET_KEY
 stripe.api_key = STRIPE_TEST_SECRET_KEY
@@ -385,7 +386,6 @@ class TestBraintreeIntegration:
         ).customer.find(
             setup_dict["customer"].braintree_integration.braintree_customer_id
         )
-        print(type(btree_cust_response), btree_cust_response.__dict__)
         assert (
             btree_cust_response.id
             == setup_dict["customer"].braintree_integration.braintree_customer_id
