@@ -102,24 +102,13 @@ jobs:
             ~/.cache
           key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
 
-      - name: Install dependencies
-        run: |
-          cd ./frontend
-          yarn install --frozen-lockfile
+      - name: Install frontend
+        run: yarn install --frozen-lockfile
+        working-directory: "frontend"
 
-      - name: Start frontend
-        run: |
-          cd ./frontend
-          yarn run dev --port 3000 &
-
-      - name: Wait for frontend to start
-        run: |
-          curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
-          echo "Frontend is available"
-
-      - name: Cypress run
+      - name: Install Cypress and run tests
         uses: cypress-io/github-action@v5
         with:
-          working-directory: ./frontend
-          start: echo "Starting Cypress..."
-          wait-on: "http://localhost:3000/login"
+          start: yarn dev --port 3000
+          working-directory: "frontend"
+          wait-on: "npx --yes wait-on --verbose --timeout 60000 tcp:3000"
